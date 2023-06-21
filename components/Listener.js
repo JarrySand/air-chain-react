@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
-import { collection, addDoc, where, query, getDocs, Timestamp, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, where, query, getDocs, Timestamp, onSnapshot, deleteDoc, doc, orderBy } from "firebase/firestore";
 import { db } from '../utils/firebase';
 import Web3Modal from "web3modal";
 import { getAttestationsByRecipient } from '../utils/easscan';
+import PostList from '../components/PostList';
 
 const defaultPostOptions = ["Opinion", "Question", "Request"];
 
@@ -94,7 +95,7 @@ const Listener = () => {
   useEffect(() => {
     if (user && user.walletAddress) {
       const listenerPostsRef = collection(db, 'listenerPosts');
-      const q = query(listenerPostsRef, where('walletAddress', '==', user.walletAddress));
+      const q = query(listenerPostsRef, where('walletAddress', '==', user.walletAddress), orderBy("timestamp", "desc")) ;
   
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const posts = [];
@@ -238,15 +239,45 @@ const Listener = () => {
   return (
     <div id="mainContent">
       <h1>on AIR/CHAIN</h1>
+      <nav>
+        <ul>
+          <li id="navFlexContainerLi">
+            <div className="nav-flex-container" id="navFlexContainer">
+              {recipientAddress && (
+                <>
+                  <div>Your Address:</div>
+                  <div title={recipientAddress}>{recipientAddress}</div>
+                </>
+              )}
+              {user && user.penName && (
+                <>
+                  <div>Pen name:</div>
+                  <div>{user.penName}</div>
+                </>
+              )}
+            </div>
+          </li>
+          {attestations.length > 0 && (
+            <li><a href="#attestations">Attestations ({attestations.length})</a></li>
+          )}
+          {recipientAddress && (
+            <li><a href="#makeAPost">Make a post</a></li>
+          )}
+          {listenerPosts.length > 0 && recipientAddress && (
+            <li><a href="#yourPosts">Your Posts</a></li>
+          )}
+          {recipientAddress && (
+            <li><a href="#feedback">Feedback</a></li>
+          )}
+        </ul>
+      </nav>
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
           {!user && !recipientAddress && (
-            <button onClick={connectWallet}>Connect Wallet</button>
+            <button className="center-text" onClick={connectWallet}>Connect Wallet</button>
           )}
-          {recipientAddress && <p>Your Address: {recipientAddress}</p>}
-          {user && <p>Welcome, {user.penName}!</p>}
 
           {!user && recipientAddress && (
             <div>
@@ -340,7 +371,7 @@ const Listener = () => {
             </div>
             <div className="form-group">
               <label htmlFor="postContent">Post content:</label>
-              <textarea id="postContent" value={listenerPostForm.content} rows="10" cols="190" className="textarea" required onChange={e => setListenerPostForm({...listenerPostForm, content: e.target.value})}></textarea>
+              <textarea id="postContent" value={listenerPostForm.content} className="textarea" required onChange={e => setListenerPostForm({...listenerPostForm, content: e.target.value})}></textarea>
             </div>
             <button type="submit" className="submit-button">Submit Post</button>
           </form>
@@ -348,28 +379,7 @@ const Listener = () => {
             {listenerPosts.length > 0 && user && user.walletAddress &&
               <div>
                 <h2 id="yourPosts">Your Posts:</h2>
-                <table className="listener-posts" style={{border: "1px solid #000"}}>
-                  <thead>
-                    <tr>
-                      <th>Station</th>
-                      <th>Type</th>
-                      <th>Content</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {listenerPosts.map((post) => (
-                      <tr key={post.id}>
-                        <td>{post.station}</td>
-                        <td>{post.postType}</td>
-                        <td>{post.content}</td>
-                        <td>
-                          <button onClick={() => deletePost(post.id)}>Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <PostList posts={listenerPosts} onDelete={deletePost} />
               </div>
             }
           </div>

@@ -1,0 +1,347 @@
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+
+:root {
+  --main-bg-color: #F5F5F5; /* Light Grey for main background */
+  --secondary-bg-color: #CCCCCC; /* Medium Grey for secondary backgrounds */
+  --primary-color: #1A1A1A; /* Very Dark Grey for primary text */
+  --secondary-color: #666666; /* Medium Dark Grey for secondary text elements */
+  --tertiary-color: #999999; /* Medium Grey for tertiary elements */
+  --highlight-color: #333333; /* Dark Grey for highlights */
+  --gradient-color: linear-gradient(315deg, #F5F5F5 0%, #CCCCCC 74%); /* Gradient from Light Grey to Medium Grey */
+  --primary-font: 'DotGothic16', sans-serif; /* Dot Gothic 16 for main font */
+  --secondary-font: 'Roboto Mono', monospace; /* Roboto Mono as fallback font */
+}
+
+body {
+  font-family: var(--primary-font);
+  margin: 30px;
+  padding: 0;
+  background-color: var(--main-bg-color);
+  color: var(--primary-color);
+  font-size: 14px;
+  padding-left: 240px; /* equal to the width of your navigation bar */
+  box-sizing: border-box; /* added to include padding in total width */
+  height: 100%; /* add height 100% */
+}
+
+html{
+  margin: 0;
+  padding: 0;
+  height: 100%; /* add height 100% */
+}
+
+#app {
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+  padding-top: 0px;
+  min-height: 100%; /* replace height with min-height */
+  display: flex; /* add display flex */
+  flex-direction: column; /* add flex direction column */
+}
+
+button, .feedback-button {
+  font-family: var(--primary-font), cursive;
+  background-color: var(--secondary-bg-color);
+  border: 1px solid var(--secondary-color);
+  color: var(--primary-color);
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 4px 2px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.center-text {
+  display: block;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.feedback-button {
+    background-color: var(--secondary-color);
+    color: var(--main-bg-color);
+    padding: 12px 24px;
+    margin-top: 1rem;
+    border-radius: 4px;
+}
+
+button:active {
+  border: 1px solid var(--highlight-color);
+}
+
+.submit-button {
+  align-self: center;
+  margin-top: 1rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--primary-font), cursive;
+  color: var(--highlight-color);
+  text-align: center;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+table th,
+table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+  word-wrap: break-word;
+  max-width: 300px;
+}
+
+table th {
+  background-color: var(--primary-color);
+  font-weight: bold;
+  color: var(--main-bg-color);
+}
+
+table tr:hover {
+  background-color: var(--secondary-bg-color);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 80%; /* Adjusted to a percentage of the viewport width */
+  margin: 0 auto; /* This will center the form horizontally */
+  font-family: var(--primary-font);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  width: 100%
+}
+
+.form-group label {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+
+.textarea {
+  resize: vertical;  
+  width: 100%;       
+  height: 200px;    
+}
+
+.form-group select,
+.form-group textarea {
+  font-family: var(--primary-font);
+  color: var(--primary-color);
+  background-color: var(--secondary-bg-color);
+  border: 1px solid var(--secondary-color);
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%; /* Added */
+  box-sizing: border-box; /* Added */
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--highlight-color);
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.half-width {
+  width: 48%; 
+}
+
+.post-header,
+.post-content,
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.card-container {
+  display: flex;
+  flex-wrap: wrap; /* allow cards to wrap to the next line */
+  justify-content: space-around; /* center cards with space around them */
+  overflow-x: auto;
+}
+
+.large-textarea {
+  width: 100%; /* Set width to 100% to fill the width of its container */
+  height: 200px; /* Set a fixed height, or use min-height to allow it to grow */
+}
+
+.feedback-section {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--secondary-bg-color);
+  margin-top: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.feedback-button:hover {
+  background-color: var(--primary-color);
+}
+
+.feedback-section h2, .feedback-section p {
+  color: var(--primary-color);
+  margin: 0.5rem 0;
+}
+
+nav {
+  position: fixed;
+  left: 0;
+  top: 0; /* make the nav bar start at the top of the page */
+  bottom: 0; /* make the nav bar end at the bottom of the page */
+  width: 240px; /* adjust as needed */
+  z-index: 9999;
+  background-color: var(--primary-color);
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: space-between;
+}
+
+nav ul li {
+  color: var(--main-bg-color);
+  text-decoration: none;
+  font-family: var(--primary-font);
+  padding: 0;  /* set padding to 0 */
+  display: block;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  text-align: center;  /* Center the text */
+  overflow-wrap: break-word; /* Add for better word breaking */
+}
+
+nav ul li a {
+  color: var(--main-bg-color);
+  text-decoration: none;
+  font-family: var(--primary-font);
+  padding: 30px 5px;
+  display: block;
+  word-wrap: break-word;
+  white-space: nowrap;
+  text-align: left;
+  max-width: 200px;
+}
+
+nav ul li a:hover {
+  background-color: var(--main-bg-color);
+  color: var(--highlight-color);
+}
+
+.nav-flex-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin-bottom: 40px;
+}
+
+nav ul li div {
+    color: var(--main-bg-color);
+    text-decoration: none;
+    font-family: var(--primary-font);
+    padding: 5px 3px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;  /* adjust this value as needed */
+    text-align: left;
+}
+
+@media (max-width: 767px) {
+  /* Reset body styles */
+
+  html, body {
+    height: auto;
+    min-height: 100vh;
+    position: relative;
+    overflow: visible;
+    overflow-y: auto;
+  }
+
+  body {
+    font-size: 14px;
+    padding: 1rem;
+    padding-left: 1rem;  /* Reset the left padding here */
+    margin: 0 auto;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  /* Update #app styles for mobile view */
+  #app {
+    text-align: center;
+    margin: 0 auto;
+    max-width: 90%; /* max-width changed to percentage for better responsiveness */
+    width: 100%; /* full width */
+    min-height: 100vh;
+  }
+
+  /* Update form styles */
+  .form {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Update button styles */
+  button {
+    padding: 12px 24px;
+  }
+
+  /* Update heading styles */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: 1.5rem;
+    text-align: center; /* Center align the text */
+  }
+
+  /* Update form and form-group styles */
+  .form,
+  .form-group {
+    width: 100%;
+  }
+
+  /* Update textarea styles */
+  textarea {
+    width: 100%; /* full width */
+  }
+
+  nav {
+    display: none;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+}

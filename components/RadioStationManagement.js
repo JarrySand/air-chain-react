@@ -197,10 +197,42 @@ const RadioStationManagement = () => {
     
     return (
         <div>
+            <h1>on AIR/CHAIN</h1>
+            <nav>
+                <ul>
+                    <li id="navFlexContainerLi">
+                    <div className="nav-flex-container" id="navFlexContainer">
+                        {recipientAddress && 
+                        <>
+                            <div>Your Address:</div>
+                            <div title={recipientAddress}>{recipientAddress}</div>
+                        </>
+                        }
+                        {radioStation && radioStation.name && 
+                        <>
+                            <div>Station name:</div>
+                            <div>{radioStation.name}</div>
+                        </>
+                        }
+                    </div>
+                    </li>
+                    {recipientAddress && radioStationPosts.length > 0 &&
+                    <li><a href="#listenerPosts">Listener posts</a></li>
+                    }
+                    {recipientAddress && attestations.length > 0 && 
+                    <li><a href="#issuedAttestations">Issued attestations</a></li>
+                    }
+                    {recipientAddress && 
+                    <>
+                        <li><a href="#settings">Settings</a></li>
+                        <li><a href="#feedback">Feedback</a></li>
+                    </>
+                    }
+                </ul>
+            </nav>
             {!radioStation ?
-                <button onClick={connectWallet}>Connect Wallet</button> :
+                <button className="center-text" onClick={connectWallet}>Connect Wallet</button> :
                 <>
-                    <p>Your Address: {recipientAddress}</p>
                     <button onClick={() => window.location.href=`/radio-station/${recipientAddress}`}>View My Page</button>
                     <p>Welcome, {radioStation.name}!</p>
                     <div>
@@ -219,33 +251,35 @@ const RadioStationManagement = () => {
                     {radioStation && recipientAddress && radioStationPosts.length > 0 && 
                         <div>
                             <h2 id="listenerPosts">Listener Posts for {radioStation.name}:</h2>
-                            <table className="listener-posts">
-                                <thead>
-                                    <tr>
-                                        <th>Pen Name</th>
-                                        <th>Type</th>
-                                        <th>Content</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {radioStationPosts.map(post => 
-                                        <tr key={post.id} className="listener-post">
-                                            <td>{post.penName}</td>
-                                            <td>{post.postType}</td>
-                                            <td>{post.content}</td>
-                                            <td>
-                                                <select id="participationType" name="participationType" 
-                                                    onChange={(e) => setSelectedParticipationType({ ...post, participationType: e.target.value })}>
-                                                    <option value="Selected post">Selected post</option>
-                                                    <option value="The best post of the day">The best post of the day</option>
-                                                    <option value="The best post of the year">The best post of the year</option>
-                                                </select>
-                                            </td>
-                                            <td><button onClick={() => selectedParticipationType && createAttestation(selectedParticipationType)}>Attest</button></td>
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Pen Name</th>
+                                            <th>Type</th>
+                                            <th>Content</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {radioStationPosts.map(post => 
+                                            <tr key={post.id}>
+                                                <td>{post.penName}</td>
+                                                <td>{post.postType}</td>
+                                                <td>{post.content}</td>
+                                                <td>
+                                                    <select id="participationType" name="participationType" 
+                                                        onChange={(e) => setSelectedParticipationType({ ...post, participationType: e.target.value })}>
+                                                        <option value="Selected post">Selected post</option>
+                                                        <option value="The best post of the day">The best post of the day</option>
+                                                        <option value="The best post of the year">The best post of the year</option>
+                                                    </select>
+                                                </td>
+                                                <td><button onClick={() => selectedParticipationType && createAttestation(selectedParticipationType)}>Attest</button></td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     }
                 </>
