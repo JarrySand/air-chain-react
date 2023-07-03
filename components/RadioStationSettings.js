@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, doc, deleteDoc, query, where, updateDoc } from '@firebase/firestore';
+import { Button, Modal, Form, Table } from 'react-bootstrap';
 
-function RadioStationSettings({ db, radioStation, setRadioStation, backToMain }) {
-  const [showEditPage, setShowEditPage] = useState(false);
-  const [showPostTypeOptionSetting, setShowPostTypeOptionSetting] = useState(false);
+function RadioStationSettings({
+  db,
+  radioStation,
+  setRadioStation,
+  backToMain,
+  initialShowEditPage,
+  initialShowPostTypeOptionSetting,
+}) {
   const [postTypeOptions, setPostTypeOptions] = useState([]);
   const [radioStationForm, setRadioStationForm] = useState({ description: '', podcastLink: '' });
   const [postTypeOptionForm, setPostTypeOptionForm] = useState({ name: '' });
+  const [showEditPage, setShowEditPage] = useState(initialShowEditPage);
+  const [showPostTypeOptionSetting, setShowPostTypeOptionSetting] = useState(initialShowPostTypeOptionSetting);
+
 
   const fetchPostTypeOptions = async () => {
     const postTypeOptionsSnapshot = await getDocs(collection(db, "postTypeOptions"));
@@ -89,45 +98,69 @@ function RadioStationSettings({ db, radioStation, setRadioStation, backToMain })
     });
   };
 
+  const closeModalAndBack = () => {
+    setShowEditPage(false);
+    setShowPostTypeOptionSetting(false);
+    backToMain();
+  };
+
+  const updateRadioStationAndClose = async (e) => {
+    await updateRadioStation(e);
+    closeModalAndBack();
+  };
+
+  const definePostTypeOptionsAndClose = async (e) => {
+    await definePostTypeOptions(e);
+    closeModalAndBack();
+  };
+
   return (
     <>
-      <h2 id="settings">Settings</h2>
-      <button onClick={() => setShowEditPage(!showEditPage)}>
-        {showEditPage ? 'Back to Dashboard' : 'Edit My Page'}
-      </button>
 
-      {showEditPage && (
-        <div>
-          <h2>Edit Radio Station Page</h2>
-          <form onSubmit={updateRadioStation}>
-            <label htmlFor="description">Description:</label>
-            <textarea id="description" value={radioStationForm.description} onChange={e => setRadioStationForm({ ...radioStationForm, description: e.target.value })} required className="large-textarea"></textarea>
+      {/* Edit My Page Modal */}
+      <Modal show={showEditPage} onHide={backToMain}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit My Page</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={updateRadioStationAndClose}>
+            <Form.Group controlId="description">
+              <Form.Label>Description</Form.Label>
+              <Form.Control as="textarea" rows={3} value={radioStationForm.description} onChange={e => setRadioStationForm({ ...radioStationForm, description: e.target.value })} required />
+            </Form.Group>
 
-            <label htmlFor="podcastLink">Podcast Link:</label>
-            <input type="url" id="podcastLink" value={radioStationForm.podcastLink} onChange={e => setRadioStationForm({ ...radioStationForm, podcastLink: e.target.value })} required />
+            <Form.Group controlId="podcastLink">
+              <Form.Label>Podcast Link</Form.Label>
+              <Form.Control type="url" value={radioStationForm.podcastLink} onChange={e => setRadioStationForm({ ...radioStationForm, podcastLink: e.target.value })} required />
+            </Form.Group>
 
-            <button type="submit">Save Changes</button>
-          </form>
-        </div>
-      )}
+            <Button variant="primary" type="submit">Save Changes</Button>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeModalAndBack}>Close</Button>
+        </Modal.Footer>
+      </Modal>
 
-      <button onClick={() => setShowPostTypeOptionSetting(!showPostTypeOptionSetting)}>
-        {showPostTypeOptionSetting ? 'Hide Post Type Option Setting' : 'Post Type Option Setting'}
-      </button>
+      {/* Post Type Option Settings Modal */}
+      <Modal show={showPostTypeOptionSetting} onHide={backToMain}>
+        <Modal.Header closeButton>
+          <Modal.Title>Post Type Option Settings</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={definePostTypeOptionsAndClose}>
+            <Form.Group controlId="postTypeOption">
+              <Form.Label>Post Type Option</Form.Label>
+              <Form.Control type="text" value={postTypeOptionForm.name} onChange={e => setPostTypeOptionForm({ name: e.target.value })} required />
+            </Form.Group>
 
-      {showPostTypeOptionSetting && (
-        <div>
-          <h2>Define Post Type Options</h2>
-          <form onSubmit={definePostTypeOptions}>
-            <label htmlFor="postTypeOption">Post Type Option:</label>
-            <input type="text" id="postTypeOption" value={postTypeOptionForm.name} onChange={e => setPostTypeOptionForm({ name: e.target.value })} required />
-            <button type="submit">Add Post Type Option</button>
-          </form>
+            <Button variant="primary" type="submit">Add Post Type Option</Button>
+          </Form>
 
           {radioStation && radioStation.walletAddress && (
             <div>
               <h3>Current post type options</h3>
-              <table>
+              <Table striped bordered hover>
                 <thead>
                   <tr>
                     <th>Option Name</th>
@@ -139,17 +172,19 @@ function RadioStationSettings({ db, radioStation, setRadioStation, backToMain })
                     <tr key={option.id}>
                       <td>{option.name}</td>
                       <td>
-                        <button onClick={() => deletePostTypeOption(option.id)}>Delete</button>
+                        <Button variant="danger" onClick={() => deletePostTypeOption(option.id)}>Delete</Button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Table>
             </div>
           )}
-        </div>
-      )}
-      <button onClick={backToMain}>Back</button>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeModalAndBack}>Close</Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

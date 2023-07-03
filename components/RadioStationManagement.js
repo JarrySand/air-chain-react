@@ -7,7 +7,10 @@ import { db } from '../utils/firebase';
 import { collection, addDoc, where, query, getDocs, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp, orderBy } from "firebase/firestore";
 import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
 import { getAttestationsByAttester } from '../utils/easscan';
-import RadioStationSettings from './RadioStationSettings';
+import RadioStationManagementNavBar from './RadioStationManagementNavBar';
+import SettingsDropdown from './RadioStationManagementSettingDropdown';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
 
 const EASContractAddress = "0xC2679fBD37d54388Ce493F1DB75320D236e1815e"; // Sepolia v0.26
 
@@ -22,6 +25,7 @@ const RadioStationManagement = () => {
     const [showDetails, setShowDetails] = useState({});
     const [users, setUsers] = useState([]);
     const [showSettings, setShowSettings] = useState(false);
+    const [loading, setLoading] = useState(false);
 
 
     useEffect(() => {
@@ -68,13 +72,14 @@ const RadioStationManagement = () => {
 
     const fetchPosts = async () => {
         const postsCollection = collection(db, "listenerPosts");
-        const q = query(postsCollection, where("station", "==", radioStation.name));
+        const q = query(postsCollection, where("station", "==", radioStation.name), orderBy("timestamp", "desc"));
         const postsSnapshot = await getDocs(q);
-        const posts = postsSnapshot.docs.map(doc => doc.data());
+        const posts = postsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         setRadioStationPosts(posts);
-    };
+    };    
 
     const connectWallet = async () => {
+        setLoading(true); 
         try {
             const providerOptions = {
                 walletconnect: {
@@ -107,6 +112,8 @@ const RadioStationManagement = () => {
             loginRadioStation(checksumAddress); // login when address is connected
         } catch (error) {
             console.error("Error connecting to wallet:", error);
+        }finally {
+            setLoading(false); // Set loading state to false when wallet connection finishes (regardless of success or failure)
         }
     }
 
@@ -197,170 +204,154 @@ const RadioStationManagement = () => {
     
     return (
         <div>
-            <h1>on AIR/CHAIN</h1>
-            <nav>
-                <ul>
-                    <li id="navFlexContainerLi">
-                    <div className="nav-flex-container" id="navFlexContainer">
-                        {recipientAddress && 
-                        <>
-                            <div>Your Address:</div>
-                            <div title={recipientAddress}>{recipientAddress}</div>
-                        </>
-                        }
-                        {radioStation && radioStation.name && 
-                        <>
-                            <div>Station name:</div>
-                            <div>{radioStation.name}</div>
-                        </>
-                        }
-                    </div>
-                    </li>
-                    {recipientAddress && radioStationPosts.length > 0 &&
-                    <li><a href="#listenerPosts">Listener posts</a></li>
-                    }
-                    {recipientAddress && attestations.length > 0 && 
-                    <li><a href="#issuedAttestations">Issued attestations</a></li>
-                    }
-                    {recipientAddress && 
-                    <>
-                        <li><a href="#settings">Settings</a></li>
-                        <li><a href="#feedback">Feedback</a></li>
-                    </>
-                    }
-                </ul>
-            </nav>
-            {!radioStation ?
-                <button className="center-text" onClick={connectWallet}>Connect Wallet</button> :
-                <>
-                    <button onClick={() => window.location.href=`/radio-station/${recipientAddress}`}>View My Page</button>
-                    <p>Welcome, {radioStation.name}!</p>
-                    <div>
-                        {showSettings ? 
-                            <RadioStationSettings 
-                                db={db} 
-                                radioStation={radioStation} 
+            {loading ? (
+                <div>Loading...</div>
+            ) : (
+                <div>
+                    <div style={{ position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <h1 style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)'}}>on AIR/CHAIN</h1>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <button 
+                            style={{ border: 'none', background: 'none', marginRight: '10px' }} 
+                            onClick={() => window.open(`/radio-station/${recipientAddress}`, '_blank')}
+                        >
+                           <FontAwesomeIcon icon={faEye} style={{ fontSize: '12px', color: 'white', backgroundColor: 'grey', padding: '5px', borderRadius: '50%', marginTop: '0px' }} />
+                        </button>
+                            <SettingsDropdown
+                                db={db}
+                                radioStation={radioStation}
                                 setRadioStation={setRadioStation}
-                                backToMain={backToMain} 
-                            /> :
-                            <>
-                                <button onClick={goToSettings}>Go to Settings</button>
-                            </>
-                        }
+                                backToMain={backToMain}
+                            />
+                        </div>
                     </div>
-                    {radioStation && recipientAddress && radioStationPosts.length > 0 && 
+    
+                    <RadioStationManagementNavBar
+                    recipientAddress={recipientAddress}
+                    radioStation={radioStation}
+                    radioStationPosts={radioStationPosts}
+                    attestations={attestations}
+                    />
+                    {!radioStation ?
+                        <button className="center-text" onClick={connectWallet}>Connect Wallet</button> :
+                        <>
+                            {radioStation && recipientAddress && radioStationPosts.length > 0 && 
+                                <div>
+                                    <h2 id="listenerPosts">Listener Posts for {radioStation.name}:</h2>
+                                    <div className="table-container">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Pen Name</th>
+                                                    <th>Type</th>
+                                                    <th>Content</th>
+                                                    <th>Timestamp</th> 
+                                                    <th>Participation Type</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {radioStationPosts.map((post, index) => 
+                                                    <tr key={`post-${index}`}>
+                                                        <td>{post.penName}</td>
+                                                        <td>{post.postType}</td>
+                                                        <td>{post.content}</td>
+                                                        <td>{post.timestamp ? new Date(post.timestamp.seconds * 1000).toLocaleDateString('en-GB') : ''}</td>
+                                                        <td>
+                                                            <select id="participationType" name="participationType" 
+                                                                onChange={(e) => setSelectedParticipationType({ ...post, participationType: e.target.value })}>
+                                                                <option value="Selected post">Selected post</option>
+                                                                <option value="The best post of the day">The best post of the day</option>
+                                                                <option value="The best post of the year">The best post of the year</option>
+                                                            </select>
+                                                        </td>
+                                                        <td><button onClick={() => selectedParticipationType && createAttestation(selectedParticipationType)}>Attest</button></td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            }
+                        </>
+                    }
+                    {!radioStation && recipientAddress &&
                         <div>
-                            <h2 id="listenerPosts">Listener Posts for {radioStation.name}:</h2>
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Pen Name</th>
-                                            <th>Type</th>
-                                            <th>Content</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {radioStationPosts.map(post => 
-                                            <tr key={post.id}>
-                                                <td>{post.penName}</td>
-                                                <td>{post.postType}</td>
-                                                <td>{post.content}</td>
-                                                <td>
-                                                    <select id="participationType" name="participationType" 
-                                                        onChange={(e) => setSelectedParticipationType({ ...post, participationType: e.target.value })}>
-                                                        <option value="Selected post">Selected post</option>
-                                                        <option value="The best post of the day">The best post of the day</option>
-                                                        <option value="The best post of the year">The best post of the year</option>
-                                                    </select>
-                                                </td>
-                                                <td><button onClick={() => selectedParticipationType && createAttestation(selectedParticipationType)}>Attest</button></td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <h2>Sign Up</h2>
+                            <form onSubmit={signUpRadioStation}>
+                                <label htmlFor="radioStationName">Radio Station Name:</label>
+                                <input
+                                    type="text"
+                                    id="radioStationName"
+                                    value={radioStationSignUpForm.name}
+                                    onChange={handleRadioStationNameChange}
+                                    required
+                                />
+                                <button type="submit">Sign Up</button>
+                            </form>
                         </div>
                     }
-                </>
-            }
-            {!radioStation && recipientAddress &&
-                <div>
-                    <h2>Sign Up</h2>
-                    <form onSubmit={signUpRadioStation}>
-                        <label htmlFor="radioStationName">Radio Station Name:</label>
-                        <input
-                            type="text"
-                            id="radioStationName"
-                            value={radioStationSignUpForm.name}
-                            onChange={handleRadioStationNameChange}
-                            required
-                        />
-                        <button type="submit">Sign Up</button>
-                    </form>
-                </div>
-            }
-            {attestations.length > 0 && (
-                <div>
-                    <h2 id="issuedAttestations">Issued Attestations ({attestations.length}):</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Recipient</th>
-                                <th>Data</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {attestations.map(attestation => (
-                                <React.Fragment key={attestation.id}>
+                    {attestations.length > 0 && (
+                        <div>
+                            <h2 id="issuedAttestations">Issued Attestations ({attestations.length}):</h2>
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td>{getRecipientName(attestation.recipient)}</td>
-                                        <td>
-                                            Station Name: {attestation.decodedData.stationName} <br />
-                                            Date: {attestation.decodedData.date} <br />
-                                            Participation Type: {attestation.decodedData.participationType}
-                                        </td>
-                                        <td>
-                                            <button onClick={() => toggleDetails(attestation.id)}>Details</button>
-                                        </td>
+                                        <th>Recipient</th>
+                                        <th>Data</th>
+                                        <th></th>
                                     </tr>
-                                    {showDetails[attestation.id] && (
+                                </thead>
+                                <tbody>
+                                {attestations.map((attestation, index) => (
+                                    <React.Fragment key={`attestation-${index}`}>
                                         <tr>
-                                            <td colSpan="3">
-                                                <strong>ID:</strong> {attestation.id}<br />
-                                                <strong>Attester:</strong> {attestation.attester}<br />
-                                                <strong>Recipient:</strong> {attestation.recipient}<br />
-                                                <strong>RefUID:</strong> {attestation.refUID}<br />
-                                                <strong>Revocable:</strong> {attestation.revocable}<br />
-                                                <strong>Revocation Time:</strong> {attestation.revocationTime}<br />
-                                                <strong>Expiration Time:</strong> {attestation.expirationTime}<br />
-                                                <strong>EASscan URL:</strong> <a href={easScanUrl(attestation.id)} target="_blank" rel="noreferrer">{easScanUrl(attestation.id)}</a>
+                                            <td>{getRecipientName(attestation.recipient)}</td>
+                                            <td>
+                                                Station Name: {attestation.decodedData.stationName} <br />
+                                                Date: {attestation.decodedData.date} <br />
+                                                Participation Type: {attestation.decodedData.participationType}
+                                            </td>
+                                            <td>
+                                                <button onClick={() => toggleDetails(attestation.id)}>Details</button>
                                             </td>
                                         </tr>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
+                                        {showDetails[attestation.id] && (
+                                            <tr>
+                                                <td colSpan="3">
+                                                    <strong>ID:</strong> {attestation.id}<br />
+                                                    <strong>Attester:</strong> {attestation.attester}<br />
+                                                    <strong>Recipient:</strong> {attestation.recipient}<br />
+                                                    <strong>RefUID:</strong> {attestation.refUID}<br />
+                                                    <strong>Revocable:</strong> {attestation.revocable}<br />
+                                                    <strong>Revocation Time:</strong> {attestation.revocationTime}<br />
+                                                    <strong>Expiration Time:</strong> {attestation.expirationTime}<br />
+                                                    <strong>EASscan URL:</strong> <a href={easScanUrl(attestation.id)} target="_blank" rel="noreferrer">{easScanUrl(attestation.id)}</a>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                    <div className="feedback-section">
+                      <h2 id="feedback">We'd love to hear your feedback</h2>
+                      <p>Your input helps us improve. Please take a moment to share your thoughts on our platform.</p>
+                      <a 
+                          href="https://docs.google.com/forms/d/e/1FAIpQLSf1OZuDeuVU9Q6wnRQVEZ46jOlWEgXbnoQ2QYPsay5BxiuSmQ/viewform" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="feedback-button"
+                      >
+                          Leave Feedback
+                      </a>
+                  </div>
                 </div>
             )}
-            <div className="feedback-section">
-              <h2 id="feedback">We'd love to hear your feedback</h2>
-              <p>Your input helps us improve. Please take a moment to share your thoughts on our platform.</p>
-              <a 
-                  href="https://docs.google.com/forms/d/e/1FAIpQLSf1OZuDeuVU9Q6wnRQVEZ46jOlWEgXbnoQ2QYPsay5BxiuSmQ/viewform" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="feedback-button"
-              >
-                  Leave Feedback
-              </a>
-          </div>                            
         </div>
     );
-    
-    
 };
 
 export default RadioStationManagement;

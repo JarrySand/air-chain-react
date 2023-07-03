@@ -6,6 +6,7 @@ import { db } from '../utils/firebase';
 import Web3Modal from "web3modal";
 import { getAttestationsByRecipient } from '../utils/easscan';
 import PostList from '../components/PostList';
+import ProfileCard from './ProfileCard';
 
 const defaultPostOptions = ["Opinion", "Question", "Request"];
 
@@ -213,6 +214,7 @@ const Listener = () => {
       ...listenerPostForm,
       penName: user.penName,
       walletAddress: user.walletAddress,
+      radioStationWalletAddress: selectedStationWalletAddress,
       timestamp: Timestamp.now(),
     };
   
@@ -229,6 +231,9 @@ const Listener = () => {
         alert(`Error submitting post: ${error.message}`);
       });
   };
+
+  const [selectedStationWalletAddress, setSelectedStationWalletAddress] = useState('');
+
 
   const deletePost = async (postId) => {
     const postRef = doc(db, 'listenerPosts', postId);
@@ -295,6 +300,13 @@ const Listener = () => {
               </form>
             </div>
           )}
+          <ProfileCard 
+            user={user} 
+            recipientAddress={recipientAddress} 
+            attestations={attestations} 
+            listenerPosts={listenerPosts} 
+            getRadioStationName={getRadioStationName} // Pass it here
+          />
           {user && attestations.length > 0 && (
             <div>
               <h2 id="attestations">Attestations ({attestations.length}):</h2>
@@ -345,14 +357,19 @@ const Listener = () => {
               <div className="form-group half-width">
                 <label htmlFor="station">Choose a radio station:</label>
                 <div className="select-container">
-                  <select id="station" value={listenerPostForm.station} required onChange={e => setListenerPostForm({...listenerPostForm, station: e.target.value})}>
+                <select id="station" value={listenerPostForm.station} required 
+                onChange={e => {
+                    setListenerPostForm({...listenerPostForm, station: e.target.value});
+                    const selectedStation = radioStations.find(station => station.name === e.target.value);
+                    setSelectedStationWalletAddress(selectedStation ? selectedStation.walletAddress : '');
+                }}>
                     <option value="">Select a station</option>
                     {radioStations.map((station, index) => 
-                      <option key={index} value={station.name}>
+                    <option key={index} value={station.name}>
                         {station.name}
-                      </option>
+                    </option>
                     )}
-                  </select>
+                </select>
                 </div>
               </div>
               <div className="form-group half-width">

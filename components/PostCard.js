@@ -5,11 +5,16 @@ function PostCard({ post, onDelete }) {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    border: '1px solid #ddd',
+    
+    /* Adjusted for a softer 3D effect */
+    border: '2px solid',
+    borderColor: '#ffffff #000000 #000000 #ffffff', /* Replace with actual colors that fit your design */
+    boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.3)',
+    position: 'relative',
+    
     borderRadius: '8px',
     padding: '10px',
     margin: '10px 0',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   };
 
   const postHeaderStyles = {
@@ -39,7 +44,7 @@ function PostCard({ post, onDelete }) {
         <p style={postHeaderItemStyles}>Date: {post.timestamp ? new Intl.DateTimeFormat('en-US').format(post.timestamp.toDate()) : ''}</p>
       </div>
       <p style={postContentStyles}>{post.content}</p>
-      <button style={deleteButtonStyles} onClick={() => onDelete(post)}>Delete</button>
+      <button style={deleteButtonStyles} onClick={() => onDelete(post.id)}>Delete</button>
     </div>
   );
 }

@@ -178,6 +178,7 @@ function RadioStationPage({ walletAddress }) {
       postType: postForm.postType,
       penName: userPenName,
       station: radioStation?.name,
+      radioStationWalletAddress: radioStation?.walletAddress,
       timestamp: serverTimestamp(),
       walletAddress: recipientAddress
     };
@@ -186,6 +187,7 @@ function RadioStationPage({ walletAddress }) {
       try {
         await addDoc(collection(db, "listenerPosts"), postData);
         fetchUserPosts();
+        alert('Post submitted successfully!');
       } catch (error) {
         console.error('Error creating post:', error);
       }
