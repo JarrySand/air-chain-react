@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import Web3Modal from "web3modal";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import Web3 from "web3";
+import { useSigner, useAddress } from "@thirdweb-dev/react";
 import { ethers } from 'ethers';
 import { db } from '../utils/firebase';
 import { collection, addDoc, where, query, getDocs, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp, orderBy } from "firebase/firestore";
 import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
 import { getAttestationsByAttester } from '../utils/easscan';
-import RadioStationManagementNavBar from './RadioStationManagementNavBar';
-import SettingsDropdown from './RadioStationManagementSettingDropdown';
+import RadioStationManagementNavBar from './RadioStationManagement/RadioStationManagementNavBar';
+import SettingsDropdown from './RadioStationManagement/RadioStationManagementSettingDropdown';
+import WalletConnector from './WalletConnector';
+import ListenerPosts from './RadioStationManagement/ListenerPosts';
+import FeedbackSection from './FeedbackSection';
+import IssuedAttestations from './RadioStationManagement/IssuedAttestations';
+import SignUpRadioStation from './RadioStationManagement/SignUpRadioStation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 
@@ -19,13 +22,16 @@ const RadioStationManagement = () => {
     const [radioStationSignUpForm, setRadioStationSignUpForm] = useState({ name: '' });
     const [radioStation, setRadioStation] = useState(null);
     const [radioStationPosts, setRadioStationPosts] = useState([]);
-    const [signer, setSigner] = useState(null);
     const [selectedParticipationType, setSelectedParticipationType] = useState(null);
     const [attestations, setAttestations] = useState([]);
     const [showDetails, setShowDetails] = useState({});
     const [users, setUsers] = useState([]);
     const [showSettings, setShowSettings] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [loadingOperation, setLoadingOperation] = useState(false);
+
+    const address = useAddress();
+    const signer = useSigner();
 
 
     useEffect(() => {
@@ -39,12 +45,6 @@ const RadioStationManagement = () => {
             fetchPosts();
         }
     }, [radioStation]);
-
-    useEffect(() => {
-        if (recipientAddress) {
-            loginRadioStation(recipientAddress);
-        }
-    }, [recipientAddress]);
 
     useEffect(() => {
         if (recipientAddress) {
@@ -78,46 +78,28 @@ const RadioStationManagement = () => {
         setRadioStationPosts(posts);
     };    
 
-    const connectWallet = async () => {
+    const onWalletConnect = ({ address, signer }) => {
+        console.log('onWalletConnect called');
         setLoading(true); 
         try {
-            const providerOptions = {
-                walletconnect: {
-                    package: WalletConnectProvider,
-                    options: {
-                        rpc: {
-                            1: "https://mainnet.infura.io/v3/2ff2983fb66349749d43fcb0a3402469",
-                        },
-                    },
-                },
-            };
-
-            const web3Modal = new Web3Modal({
-                cacheProvider: true,
-                providerOptions,
-            });
-
-            const provider = await web3Modal.connect();
-            const web3 = new Web3(provider);
-
-            const signerFromProvider = new ethers.providers.Web3Provider(provider).getSigner();
-            setSigner(signerFromProvider); // update the signer state
-            const accounts = await web3.eth.getAccounts();
-            const rawAddress = accounts[0];
-            const checksumAddress = ethers.utils.getAddress(rawAddress);
-            setRecipientAddress(checksumAddress);
-
-            // Here you can fetch attestations and log in radio station as well
-            // Not sure how you want to implement it so leaving it blank for now
-            loginRadioStation(checksumAddress); // login when address is connected
+          const checksumAddress = ethers.utils.getAddress(address);
+          // here you no longer need to call signer(signer); just use the signer directly
+          setRecipientAddress(checksumAddress);
+      
+          console.log('Set signer to: ', signer);
+          console.log('Set recipient address to: ', checksumAddress);
+      
+          // remove this line
+          // loginRadioStation(checksumAddress); // login when address is connected
         } catch (error) {
-            console.error("Error connecting to wallet:", error);
-        }finally {
-            setLoading(false); // Set loading state to false when wallet connection finishes (regardless of success or failure)
+          console.error("Error connecting to wallet:", error);
+        } finally {
+          setLoading(false); // Set loading state to false when wallet connection finishes (regardless of success or failure)
         }
-    }
-
+    };
+      
     const signUpRadioStation = async () => {
+        setLoadingOperation(true); // Set loadingOperation to true at the start of the operation
         const radioStationName = radioStationSignUpForm.name;
         if (radioStationName) {
             const radioStationData = {
@@ -127,9 +109,11 @@ const RadioStationManagement = () => {
             await addDoc(collection(db, "radioStations"), radioStationData);
             setRadioStation(radioStationData);
         }
+        setLoadingOperation(false); // Set loadingOperation to false when the operation is done
     }
-
+    
     const loginRadioStation = async (address) => {
+        setLoadingOperation(true); // Set loadingOperation to true at the start of the operation
         const q = query(
             collection(db, "radioStations"),
             where("walletAddress", "==", address)
@@ -141,8 +125,9 @@ const RadioStationManagement = () => {
             const radioStationData = snapshot.docs[0].data();
             setRadioStation(radioStationData);
         }
+        setLoadingOperation(false); // Set loadingOperation to false when the operation is done
     }
-
+    
     const createAttestation = async (post) => {
         if(!radioStation || !post || !post.participationType) {
             console.error('Invalid data, cannot create attestation');
@@ -204,19 +189,20 @@ const RadioStationManagement = () => {
     
     return (
         <div>
-            {loading ? (
+            <WalletConnector onConnect={onWalletConnect} style={{ position: 'absolute', top: 0, left: 0 }} />
+            {loading || loadingOperation ? (  // Check for both loading and loadingOperation
                 <div>Loading...</div>
             ) : (
                 <div>
                     <div style={{ position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <h1 style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)'}}>on AIR/CHAIN</h1>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <button 
-                            style={{ border: 'none', background: 'none', marginRight: '10px' }} 
-                            onClick={() => window.open(`/radio-station/${recipientAddress}`, '_blank')}
-                        >
-                           <FontAwesomeIcon icon={faEye} style={{ fontSize: '12px', color: 'white', backgroundColor: 'grey', padding: '5px', borderRadius: '50%', marginTop: '0px' }} />
-                        </button>
+                            <button 
+                                style={{ border: 'none', background: 'none', marginRight: '10px' }} 
+                                onClick={() => window.open(`/radio-station/${recipientAddress}`, '_blank')}
+                            >
+                                <FontAwesomeIcon icon={faEye} style={{ fontSize: '12px', color: 'white', backgroundColor: 'grey', padding: '5px', borderRadius: '50%', marginTop: '0px' }} />
+                            </button>
                             <SettingsDropdown
                                 db={db}
                                 radioStation={radioStation}
@@ -227,131 +213,45 @@ const RadioStationManagement = () => {
                     </div>
     
                     <RadioStationManagementNavBar
-                    recipientAddress={recipientAddress}
-                    radioStation={radioStation}
-                    radioStationPosts={radioStationPosts}
-                    attestations={attestations}
+                        recipientAddress={recipientAddress}
+                        radioStation={radioStation}
+                        radioStationPosts={radioStationPosts}
+                        attestations={attestations}
                     />
-                    {!radioStation ?
-                        <button className="center-text" onClick={connectWallet}>Connect Wallet</button> :
-                        <>
-                            {radioStation && recipientAddress && radioStationPosts.length > 0 && 
-                                <div>
-                                    <h2 id="listenerPosts">Listener Posts for {radioStation.name}:</h2>
-                                    <div className="table-container">
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Pen Name</th>
-                                                    <th>Type</th>
-                                                    <th>Content</th>
-                                                    <th>Timestamp</th> 
-                                                    <th>Participation Type</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {radioStationPosts.map((post, index) => 
-                                                    <tr key={`post-${index}`}>
-                                                        <td>{post.penName}</td>
-                                                        <td>{post.postType}</td>
-                                                        <td>{post.content}</td>
-                                                        <td>{post.timestamp ? new Date(post.timestamp.seconds * 1000).toLocaleDateString('en-GB') : ''}</td>
-                                                        <td>
-                                                            <select id="participationType" name="participationType" 
-                                                                onChange={(e) => setSelectedParticipationType({ ...post, participationType: e.target.value })}>
-                                                                <option value="Selected post">Selected post</option>
-                                                                <option value="The best post of the day">The best post of the day</option>
-                                                                <option value="The best post of the year">The best post of the year</option>
-                                                            </select>
-                                                        </td>
-                                                        <td><button onClick={() => selectedParticipationType && createAttestation(selectedParticipationType)}>Attest</button></td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            }
-                        </>
+    
+                    {radioStation && recipientAddress && radioStationPosts.length > 0 && (
+                            <ListenerPosts
+                                radioStation={radioStation}
+                                recipientAddress={recipientAddress}
+                                posts={radioStationPosts}
+                                onSelectParticipationType={setSelectedParticipationType}
+                                onCreateAttestation={createAttestation}
+                            />
+                        )
                     }
+        
                     {!radioStation && recipientAddress &&
-                        <div>
-                            <h2>Sign Up</h2>
-                            <form onSubmit={signUpRadioStation}>
-                                <label htmlFor="radioStationName">Radio Station Name:</label>
-                                <input
-                                    type="text"
-                                    id="radioStationName"
-                                    value={radioStationSignUpForm.name}
-                                    onChange={handleRadioStationNameChange}
-                                    required
-                                />
-                                <button type="submit">Sign Up</button>
-                            </form>
-                        </div>
+                        <SignUpRadioStation 
+                            radioStationSignUpForm={radioStationSignUpForm} 
+                            handleRadioStationNameChange={handleRadioStationNameChange} 
+                            signUpRadioStation={signUpRadioStation}
+                        />
                     }
+    
                     {attestations.length > 0 && (
-                        <div>
-                            <h2 id="issuedAttestations">Issued Attestations ({attestations.length}):</h2>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Recipient</th>
-                                        <th>Data</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {attestations.map((attestation, index) => (
-                                    <React.Fragment key={`attestation-${index}`}>
-                                        <tr>
-                                            <td>{getRecipientName(attestation.recipient)}</td>
-                                            <td>
-                                                Station Name: {attestation.decodedData.stationName} <br />
-                                                Date: {attestation.decodedData.date} <br />
-                                                Participation Type: {attestation.decodedData.participationType}
-                                            </td>
-                                            <td>
-                                                <button onClick={() => toggleDetails(attestation.id)}>Details</button>
-                                            </td>
-                                        </tr>
-                                        {showDetails[attestation.id] && (
-                                            <tr>
-                                                <td colSpan="3">
-                                                    <strong>ID:</strong> {attestation.id}<br />
-                                                    <strong>Attester:</strong> {attestation.attester}<br />
-                                                    <strong>Recipient:</strong> {attestation.recipient}<br />
-                                                    <strong>RefUID:</strong> {attestation.refUID}<br />
-                                                    <strong>Revocable:</strong> {attestation.revocable}<br />
-                                                    <strong>Revocation Time:</strong> {attestation.revocationTime}<br />
-                                                    <strong>Expiration Time:</strong> {attestation.expirationTime}<br />
-                                                    <strong>EASscan URL:</strong> <a href={easScanUrl(attestation.id)} target="_blank" rel="noreferrer">{easScanUrl(attestation.id)}</a>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <IssuedAttestations 
+                        attestations={attestations} 
+                        getRecipientName={getRecipientName} 
+                        toggleDetails={toggleDetails} 
+                        showDetails={showDetails} 
+                        easScanUrl={easScanUrl} />
                     )}
-                    <div className="feedback-section">
-                      <h2 id="feedback">We'd love to hear your feedback</h2>
-                      <p>Your input helps us improve. Please take a moment to share your thoughts on our platform.</p>
-                      <a 
-                          href="https://docs.google.com/forms/d/e/1FAIpQLSf1OZuDeuVU9Q6wnRQVEZ46jOlWEgXbnoQ2QYPsay5BxiuSmQ/viewform" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="feedback-button"
-                      >
-                          Leave Feedback
-                      </a>
-                  </div>
+    
+                    <FeedbackSection />
                 </div>
             )}
         </div>
-    );
+    );    
 };
 
 export default RadioStationManagement;

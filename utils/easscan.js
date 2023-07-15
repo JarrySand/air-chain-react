@@ -1,55 +1,18 @@
 // src/utils/easscan.js
-import { Buffer } from 'buffer';
+import Web3 from 'web3';
 
 const API_URL = "https://sepolia.easscan.org/graphql";
 
 function decodeAttestationData(hexData) {
-  const dataBuffer = Buffer.from(hexData.slice(2), "hex");
+  const web3 = new Web3();
 
-  if (dataBuffer.length < 16) {
-    console.error('Received data is too short. Expected at least 16 bytes');
-    return null;
-  }
+  const abi = ['string[]', 'uint64', 'string'];
+  const decodedData = web3.eth.abi.decodeParameters(abi, hexData);
 
-  const offsetStationName = dataBuffer.readUInt32BE(0);
-
-  if (offsetStationName + 4 > dataBuffer.length) {
-    console.error('Invalid station name offset. Check the input data');
-    return null;
-  }
-
-  const stationNameLength = dataBuffer.readUInt32BE(offsetStationName);
-
-  if (offsetStationName + 4 + stationNameLength > dataBuffer.length) {
-    console.error('Invalid station name length. Check the input data');
-    return null;
-  }
-
-  const stationName = dataBuffer
-    .slice(offsetStationName + 4, offsetStationName + 4 + stationNameLength)
-    .toString("utf8")
-    .replace(/\0/g, ''); // Remove null bytes
-
-  const date = dataBuffer.readBigUInt64BE(offsetStationName + 4 + stationNameLength);
-
-  const offsetParticipationType = offsetStationName + 4 + stationNameLength + 8;
-
-  if (offsetParticipationType + 4 > dataBuffer.length) {
-    console.error('Invalid participation type offset. Check the input data');
-    return null;
-  }
-
-  const participationTypeLength = dataBuffer.readUInt32BE(offsetParticipationType);
-
-  if (offsetParticipationType + 4 + participationTypeLength > dataBuffer.length) {
-    console.error('Invalid participation type length. Check the input data');
-    return null;
-  }
-
-  const participationType = dataBuffer
-    .slice(offsetParticipationType + 4, offsetParticipationType + 4 + participationTypeLength)
-    .toString("utf8")
-    .replace(/\0/g, ''); // Remove null bytes
+  // Assuming the string[] is of length 1, based on your example
+  const stationName = decodedData[0][0];
+  const date = decodedData[1];
+  const participationType = decodedData[2];
 
   return {
     stationName,
@@ -57,9 +20,6 @@ function decodeAttestationData(hexData) {
     participationType,
   };
 }
-
-
-
 
 
 export async function getAttestationsByRecipient(recipient) {

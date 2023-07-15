@@ -325,6 +325,7 @@ const Listener = () => {
                         <td>{getRadioStationName(attestation.attester)}</td>
                         <td>
                           Station Name: {attestation.decodedData.stationName} <br/>
+                          Date: {attestation.decodedData.date} <br/>
                           Participation Type: {attestation.decodedData.participationType}
                         </td>
                         <td>
