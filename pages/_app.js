@@ -1,11 +1,20 @@
 import '../styles/global.css';
-import { ThirdwebProvider } from "@thirdweb-dev/react";
-import { Sepoila } from "@thirdweb-dev/chains"; // replace 'Sepoila' with the correct chain name if different
+import { magicLink, metamaskWallet, coinbaseWallet, ThirdwebProvider } from "@thirdweb-dev/react";
+import { Sepolia } from "@thirdweb-dev/chains"; 
 
-// This default export is required in a new `pages/_app.js` file.
+const magicLinkConfig = magicLink({
+  apiKey: "pk_live_20E224B958574627",
+  type: 'connect' 
+});
+
 export default function MyApp({ Component, pageProps }) {
     return (
-        <ThirdwebProvider activeChain={Sepoila}>
+        <ThirdwebProvider activeChain={Sepolia} 
+            supportedWallets={[
+                metamaskWallet(),
+                coinbaseWallet(),
+                magicLinkConfig
+            ]}>
             <Component {...pageProps} />
         </ThirdwebProvider>
     );

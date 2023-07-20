@@ -3,7 +3,6 @@ import { useSigner, useAddress } from "@thirdweb-dev/react";
 import { ethers } from 'ethers';
 import { db } from '../utils/firebase';
 import { collection, addDoc, where, query, getDocs, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp, orderBy } from "firebase/firestore";
-import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
 import { getAttestationsByAttester } from '../utils/easscan';
 import RadioStationManagementNavBar from './RadioStationManagement/RadioStationManagementNavBar';
 import SettingsDropdown from './RadioStationManagement/RadioStationManagementSettingDropdown';
@@ -127,44 +126,6 @@ const RadioStationManagement = () => {
         }
         setLoadingOperation(false); // Set loadingOperation to false when the operation is done
     }
-    
-    const createAttestation = async (post) => {
-        if(!radioStation || !post || !post.participationType) {
-            console.error('Invalid data, cannot create attestation');
-            return;
-        }
-    
-        const eas = new EAS(EASContractAddress);
-        eas.connect(signer);
-    
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = ("0" + (date.getMonth() + 1)).slice(-2); 
-        const day = ("0" + date.getDate()).slice(-2);
-        const formattedDate = year + month + day; 
-    
-        const schemaEncoder = new SchemaEncoder("string[] RadioStationName,uint64 Date,string TypeofParticipation");
-        const encodedData = schemaEncoder.encodeData([
-            { name: "RadioStationName", value: [radioStation.name], type: "string[]" },
-            { name: "Date", value: Number(formattedDate), type: "uint64" },
-            { name: "TypeofParticipation", value: post.participationType, type: "string" },
-        ]);
-    
-        const schemaUID = "0x2a98ae55558be4e173402dbb3a2cbd38e1be1b815988cfb6faab22ffe6d45fc7";
-    
-        const tx = await eas.attest({
-            schema: schemaUID,
-            data: {
-                recipient: post.walletAddress,
-                expirationTime: 0,
-                revocable: true,
-                data: encodedData,
-            },
-        });
-    
-        const newAttestationUID = await tx.wait();
-        console.log("New attestation UID:", newAttestationUID);
-    }
 
     // New function for toggling details
     const toggleDetails = (id) => {
@@ -221,11 +182,11 @@ const RadioStationManagement = () => {
     
                     {radioStation && recipientAddress && radioStationPosts.length > 0 && (
                             <ListenerPosts
-                                radioStation={radioStation}
-                                recipientAddress={recipientAddress}
-                                posts={radioStationPosts}
-                                onSelectParticipationType={setSelectedParticipationType}
-                                onCreateAttestation={createAttestation}
+                            radioStation={radioStation}
+                            recipientAddress={recipientAddress}
+                            posts={radioStationPosts}
+                            signer={signer}
+                            EASContractAddress={EASContractAddress}
                             />
                         )
                     }

@@ -1,4 +1,4 @@
-import { ConnectWallet, ThirdwebProvider, useAddress, useSigner } from "@thirdweb-dev/react";
+import { ConnectWallet, useAddress, useSigner } from "@thirdweb-dev/react";
 import React, { useEffect } from 'react';
 
 function WalletConnector({ onConnect }) {
