@@ -4,11 +4,11 @@ import { ethers } from 'ethers';
 import { db } from '../utils/firebase';
 import { collection, addDoc, where, query, getDocs, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp, orderBy } from "firebase/firestore";
 import { getAttestationsByAttester } from '../utils/easscan';
-import RadioStationManagementNavBar from './RadioStationManagement/RadioStationManagementNavBar';
-import SettingsDropdown from './RadioStationManagement/RadioStationManagementSettingDropdown';
-import WalletConnector from './WalletConnector';
+import RadioStationManagementNavBar from './RadioStationManagement/NavBar';
+import SettingsDropdown from './RadioStationManagement/SettingDropdown';
+import WalletConnector from './General/WalletConnector';
 import ListenerPosts from './RadioStationManagement/ListenerPosts';
-import FeedbackSection from './FeedbackSection';
+import FeedbackSection from './General/FeedbackSection';
 import IssuedAttestations from './RadioStationManagement/IssuedAttestations';
 import SignUpRadioStation from './RadioStationManagement/SignUpRadioStation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -82,23 +82,20 @@ const RadioStationManagement = () => {
         setLoading(true); 
         try {
           const checksumAddress = ethers.utils.getAddress(address);
-          // here you no longer need to call signer(signer); just use the signer directly
           setRecipientAddress(checksumAddress);
       
           console.log('Set signer to: ', signer);
           console.log('Set recipient address to: ', checksumAddress);
       
-          // remove this line
-          // loginRadioStation(checksumAddress); // login when address is connected
         } catch (error) {
           console.error("Error connecting to wallet:", error);
         } finally {
-          setLoading(false); // Set loading state to false when wallet connection finishes (regardless of success or failure)
+          setLoading(false); 
         }
     };
       
     const signUpRadioStation = async () => {
-        setLoadingOperation(true); // Set loadingOperation to true at the start of the operation
+        setLoadingOperation(true); 
         const radioStationName = radioStationSignUpForm.name;
         if (radioStationName) {
             const radioStationData = {
@@ -108,11 +105,11 @@ const RadioStationManagement = () => {
             await addDoc(collection(db, "radioStations"), radioStationData);
             setRadioStation(radioStationData);
         }
-        setLoadingOperation(false); // Set loadingOperation to false when the operation is done
+        setLoadingOperation(false); 
     }
     
     const loginRadioStation = async (address) => {
-        setLoadingOperation(true); // Set loadingOperation to true at the start of the operation
+        setLoadingOperation(true); 
         const q = query(
             collection(db, "radioStations"),
             where("walletAddress", "==", address)
@@ -124,15 +121,13 @@ const RadioStationManagement = () => {
             const radioStationData = snapshot.docs[0].data();
             setRadioStation(radioStationData);
         }
-        setLoadingOperation(false); // Set loadingOperation to false when the operation is done
+        setLoadingOperation(false); 
     }
 
-    // New function for toggling details
     const toggleDetails = (id) => {
         setShowDetails(prevDetails => ({ ...prevDetails, [id]: !prevDetails[id] }));
     };
 
-    // New function for generating EASscan URL
     const easScanUrl = (id) => `https://sepolia.easscan.org/attestation/view/${id}`;
 
     const getRecipientName = (recipientAddress) => {
@@ -151,24 +146,19 @@ const RadioStationManagement = () => {
     return (
         <div>
             <WalletConnector onConnect={onWalletConnect} style={{ position: 'absolute', top: 0, left: 0 }} />
-            {loading || loadingOperation ? (  // Check for both loading and loadingOperation
+            {loading || loadingOperation ? (  
                 <div>Loading...</div>
             ) : (
                 <div>
                     <div style={{ position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <h1 style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)'}}>on AIR/CHAIN</h1>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <button 
-                                style={{ border: 'none', background: 'none', marginRight: '10px' }} 
-                                onClick={() => window.open(`/radio-station/${recipientAddress}`, '_blank')}
-                            >
-                                <FontAwesomeIcon icon={faEye} style={{ fontSize: '12px', color: 'white', backgroundColor: 'grey', padding: '5px', borderRadius: '50%', marginTop: '0px' }} />
-                            </button>
                             <SettingsDropdown
                                 db={db}
                                 radioStation={radioStation}
                                 setRadioStation={setRadioStation}
                                 backToMain={backToMain}
+                                recipientAddress={recipientAddress}
                             />
                         </div>
                     </div>

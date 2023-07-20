@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { FaCog } from 'react-icons/fa';
 import EditMyPage from './EditMyPage';
 import EditPostTypeOptions from './EditPostTypeOptions';
 
-function SettingsDropdown({ db, radioStation, setRadioStation, backToMain }) {
+function SettingsDropdown({ db, radioStation, setRadioStation, backToMain, recipientAddress }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditPage, setShowEditPage] = useState(false);
   const [showPostTypeOptionSetting, setShowPostTypeOptionSetting] = useState(false);
@@ -18,8 +17,19 @@ function SettingsDropdown({ db, radioStation, setRadioStation, backToMain }) {
 
     document.addEventListener('click', clickListener);
 
+    const hashChangeListener = () => {
+      if (window.location.hash === '#settings') {
+        setShowDropdown(true);
+      } else {
+        setShowDropdown(false);
+      }
+    };
+
+    window.addEventListener('hashchange', hashChangeListener);
+
     return () => {
       document.removeEventListener('click', clickListener);
+      window.removeEventListener('hashchange', hashChangeListener);
     };
   }, []);
 
@@ -36,18 +46,19 @@ function SettingsDropdown({ db, radioStation, setRadioStation, backToMain }) {
   return (
     <>
       <div ref={dropdownRef} className="dropdown">
-      <button
-        className="button"
-        variant="success"
-        id="dropdown-basic"
-        onClick={() => setShowDropdown(!showDropdown)}
-      >
-        <FaCog size={20} />
-      </button>
+        <button
+          className="button"
+          variant="success"
+          id="settings"
+          onClick={() => setShowDropdown(!showDropdown)}
+        >
+          Settings {/* Replace icon with "Settings" text */}
+        </button>
         {showDropdown && (
           <div className="dropdown-menu">
             <button className="nav ul li" onClick={handleOptionClick('page')}>Edit My Page</button>
             <button className="nav ul li" onClick={handleOptionClick('postTypeOptions')}>Edit Post Type Options</button>
+            <button className="nav ul li" onClick={() => window.open(`/radio-station/${recipientAddress}`, '_blank')}>View My Form Page</button>
           </div>
         )}
       </div>

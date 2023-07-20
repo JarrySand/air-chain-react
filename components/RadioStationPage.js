@@ -1,24 +1,21 @@
 import { useState, useEffect } from "react";
 import { getFirestore, collection, query, where, getDocs, addDoc, doc, deleteDoc, orderBy, serverTimestamp } from 'firebase/firestore';
-import { ethers } from 'ethers';
 import { db } from '../utils/firebase';
-import PostList from '../components/PostList';
+import PostList from './Listener/PostList';
 import NavBar from './RadioStationPage/NavBar';
 import PostForm from './RadioStationPage/PostForm';
-import FeedbackSection from './FeedbackSection';
+import FeedbackSection from './General/FeedbackSection';
 import SignUpForm from './Listener/SignUpForm';  
-import WalletConnector from './WalletConnector';
+import WalletConnector from './General/WalletConnector';
 
 function RadioStationPage({ walletAddress }) {
   const [radioStation, setRadioStation] = useState({});
   const [recipientAddress, setRecipientAddress] = useState("");
   const [signUpForm, setSignUpForm] = useState({ penName: "" });
   const [user, setUser] = useState(null);
-  const [web3, setWeb3] = useState(null);
   const [postForm, setPostForm] = useState({ content: "", postType: "" });
   const [postTypeOptions, setPostTypeOptions] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   useEffect(() => {

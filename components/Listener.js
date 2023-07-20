@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, where, query, getDocs, Timestamp, onSnapshot, deleteDoc, doc, orderBy } from "firebase/firestore";
 import { db } from '../utils/firebase';
 import { getAttestationsByRecipient } from '../utils/easscan';
-import PostList from '../components/PostList';
-import ProfileCard from './ProfileCard';
-import FeedbackSection from './FeedbackSection';
+import PostList from './Listener/PostList';
+import ProfileCard from './Listener/ProfileCard';
+import FeedbackSection from './General/FeedbackSection';
 import Navbar from './Listener/Navbar';
 import AttestationsTable from './Listener/AttestationsTable';
 import PostForm from './Listener/PostForm';
 import SignUpForm from './Listener/SignUpForm'; 
-import WalletConnector from './WalletConnector';
+import WalletConnector from './General/WalletConnector';
 
 const defaultPostOptions = ["Opinion", "Question", "Request"];
 
