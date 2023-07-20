@@ -5,7 +5,7 @@ import { getAttestationsByRecipient } from '../utils/easscan';
 import PostList from './Listener/PostList';
 import ProfileCard from './Listener/ProfileCard';
 import FeedbackSection from './General/FeedbackSection';
-import Navbar from './Listener/Navbar';
+import Navbar from './Listener/NavBar';
 import AttestationsTable from './Listener/AttestationsTable';
 import PostForm from './Listener/PostForm';
 import SignUpForm from './Listener/SignUpForm'; 
