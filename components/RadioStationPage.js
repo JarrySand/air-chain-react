@@ -7,6 +7,7 @@ import PostForm from './RadioStationPage/PostForm';
 import FeedbackSection from './General/FeedbackSection';
 import SignUpForm from './Listener/SignUpForm';  
 import WalletConnector from './General/WalletConnector';
+import { NextSeo } from 'next-seo';
 
 function RadioStationPage({ walletAddress }) {
   const [radioStation, setRadioStation] = useState({});
@@ -148,20 +149,34 @@ function RadioStationPage({ walletAddress }) {
 
   return (
     <div>
+      <NextSeo
+        title={radioStation.name || "Default Title"}
+        description={radioStation.description || "Default Description"}
+        openGraph={{
+          title: radioStation.name || "Default Title",
+          description: radioStation.description || "Default Description",
+          images: [
+            {
+              url: radioStation.imageURL || "/default.png",  // Updated this path
+              alt: radioStation.name || "Default Alt",
+            },
+          ],
+        }}
+      />  
       <NavBar 
         recipientAddress={recipientAddress} 
         userPenName={userPenName} 
       />
       {radioStation ? (
         <div>
-           <WalletConnector onConnect={handleWalletConnect} />
+          <WalletConnector onConnect={handleWalletConnect} />
           <h1>{radioStation.name}</h1>
           <a className="center-text" href={radioStation.podcastLink} target="_blank" rel="noopener noreferrer">
-           Listen to the radio
+            Listen to the radio
           </a>
           <p className="center-text" dangerouslySetInnerHTML={{ __html: formattedDescription }} />
           <img src={radioStation.imageURL} alt={radioStation.name} />
-
+  
           {!user && recipientAddress && !isLoadingUser ? (
             <SignUpForm 
               signUpForm={signUpForm}
@@ -181,7 +196,7 @@ function RadioStationPage({ walletAddress }) {
                       createPost={createPost} 
                       postTypeOptions={postTypeOptions} 
                     />
-                    <h2 id="yourPosts"> Previous posts for {radioStation.name}</h2>
+                    <h2 id="yourPosts">Previous posts for {radioStation.name}</h2>
                     <PostList posts={userPosts} onDelete={deletePost} />
                   </>
                 ) : (

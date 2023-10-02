@@ -36,65 +36,55 @@ const Listener = () => {
       getAttestationsByRecipient(recipientAddress)
         .then(setAttestations)
         .catch(console.error);
-  
-      const fetchRadioStations = async () => {
-        try {
-          const radioStationsRef = collection(db, "radioStations");
-          const radioStationsSnapshot = await getDocs(radioStationsRef);
-          const radioStationsData = radioStationsSnapshot.docs.map(doc => doc.data());
-          setRadioStations(radioStationsData);
-        } catch (error) {
-          console.error("Error fetching radio stations data:", error);
-        }
-      };
-  
-      fetchRadioStations();
     }
   }, [recipientAddress]);
 
   useEffect(() => {
     const fetchRadioStationsAndPostTypeOptions = async () => {
-      const radioStationsSnapshot = await getDocs(collection(db, "radioStations"));
-      const radioStationsData = radioStationsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setRadioStations(radioStationsData);
-  
-      const postTypeOptionsSnapshot = await getDocs(collection(db, "postTypeOptions"));
-      const postTypeOptionsData = postTypeOptionsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPostTypeOptions(postTypeOptionsData);
+        try {
+            const radioStationsSnapshot = await getDocs(collection(db, "radioStations"));
+            const allStations = radioStationsSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            const filteredStations = allStations.filter(station => station.description && station.description.trim().length > 0);
+            setRadioStations(filteredStations);
+
+            const postTypeOptionsSnapshot = await getDocs(collection(db, "postTypeOptions"));
+            const postTypeOptionsData = postTypeOptionsSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setPostTypeOptions(postTypeOptionsData);
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
     };
-  
+
     fetchRadioStationsAndPostTypeOptions();
-  }, []); 
-  
-  
+  }, []);
+
   useEffect(() => {
     const computePostTypeOptions = () => {
       const selectedStation = listenerPostForm.station;
       const radioStation = radioStations.find((station) => station.name === selectedStation);
-  
-      let selectedStationPostTypeOptions = [];
+
       if (radioStation) {
         const customPostOptions = postTypeOptions.filter((option) => option.radioStationWalletAddress === radioStation.walletAddress);
-        selectedStationPostTypeOptions = customPostOptions.length > 0 ? customPostOptions : defaultPostOptions;
+        const selectedStationPostTypeOptions = customPostOptions.length > 0 ? customPostOptions : defaultPostOptions;
+        setComputedPostTypeOptions(selectedStationPostTypeOptions);
       }
-  
-      setComputedPostTypeOptions(selectedStationPostTypeOptions);
     };
-  
+
     computePostTypeOptions();
   }, [listenerPostForm.station, radioStations, postTypeOptions]);
 
   useEffect(() => {
     if (user && user.walletAddress) {
       const listenerPostsRef = collection(db, 'listenerPosts');
-      const q = query(listenerPostsRef, where('walletAddress', '==', user.walletAddress), orderBy("timestamp", "desc")) ;
-  
+      const q = query(listenerPostsRef, where('walletAddress', '==', user.walletAddress), orderBy("timestamp", "desc"));
+
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const posts = [];
         querySnapshot.forEach((doc) => {
@@ -102,7 +92,7 @@ const Listener = () => {
         });
         setListenerPosts(posts);
       });
-  
+
       return () => unsubscribe();
     }
   }, [user]);
